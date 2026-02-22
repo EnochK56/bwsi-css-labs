@@ -35,11 +35,16 @@ def simple_calculator(operation: str, num1: float, num2: float) -> float:
         else:
             raise ValueError("Cannot divide by zero.")
     else:
+        # Defensive: raise if an unsupported operation is passed directly
         raise ValueError("Invalid operation. Please choose from 'add', 'subtract', 'multiply', or 'divide'.")
 
 def request_sanitized_number(prompt: str) -> float:
     """
-    Function to request and sanitize user input for the operation.
+    Function to request and sanitize user input for a number.
+    
+    Args:
+        prompt (str): The prompt to display to the user.
+        
     Returns:
         float: The sanitized numeric input by the user.
     """
@@ -49,19 +54,52 @@ def request_sanitized_number(prompt: str) -> float:
             return number
         except ValueError:
             print("Invalid input. Please enter a valid number.")
+        except (EOFError, KeyboardInterrupt):
+            # Treat Ctrl-D/Ctrl-C or EOF as an intentional exit
+            print()
+            raise SystemExit("No input received; exiting.")
+
+def request_sanitized_operation(prompt: str) -> str:
+    """
+    Function to request and sanitize user input for the operation.
+    
+    Args:
+        prompt (str): The prompt to display to the user.
+        
+    Returns:
+        str: The sanitized operation input by the user.
+    """
+    valid_operations = ["add", "subtract", "multiply", "divide"]
+    while True:
+        operation = input(prompt).strip().lower()
+        if operation in valid_operations:
+            return operation
+        else:
+            print("Invalid operation. Please choose from 'add', 'subtract', 'multiply', or 'divide'.")
+        
+        # If the user hits EOF/Ctrl-C while entering an operation, exit cleanly
+        # (input() will raise EOFError/KeyboardInterrupt which will bubble up)
 
 def main():
     
     print(f"===== Simple Calculator =====")
 
-    # Ask the user for sample input    
-    num1 = float(input("Enter the first number: "))
-    num2 = float(input("Enter the second number: "))
-    operation = input("Enter the operation (add, subtract, multiply, divide): ").strip().lower()
+    # Ask the user for sample input
+    num1 = request_sanitized_number("Enter the first number: ")
+    num2 = request_sanitized_number("Enter the second number: ")
+    operation = request_sanitized_operation("Enter the operation (add, subtract, multiply, divide): ")
 
     # Perform the calculation and display the result
     result = simple_calculator(operation, num1, num2)
-    print(f"The result of {operation}ing {num1} and {num2} is: {result}")
+    # Use a small map for nicer English (so 'divide' -> 'dividing' rather than 'divideing')
+    op_gerund = {
+        "add": "adding",
+        "subtract": "subtracting",
+        "multiply": "multiplying",
+        "divide": "dividing",
+    }
+    action = op_gerund.get(operation, operation + "ing")
+    print(f"The result of {action} {num1} and {num2} is: {result}")
 
 
 if __name__ == "__main__":
